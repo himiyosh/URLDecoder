@@ -4,60 +4,96 @@
   <meta charset="UTF-8">
   <title>URL エンコード・デコードツール</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts の読み込み -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* 全体のスタイル */
+    :root {
+      --primary-color: #2C3E50;
+      --accent-color: #E74C3C;
+      --container-bg: rgba(255, 255, 255, 0.9);
+      --button-bg: #3498DB;
+      --button-hover: #2980B9;
+    }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+      /* Flexbox を利用して中央配置 */
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
-    .container {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 20px;
-      max-width: 800px;
+    /* 背景キャンバス */
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 100%;
+      z-index: -1;
+    }
+    .container {
+      background-color: var(--container-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 800px;
+      width: 90%;
+      margin: 20px;  /* 画面サイズが小さい場合の余白 */
+      text-align: center;
+      position: relative;
+      z-index: 1;
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-weight: 500;
     }
     textarea {
-      width: 100%;
-      height: 250px;  /* 高さを大きく設定 */
-      padding: 10px;
-      margin: 10px 0;
+      width: 80%;
+      height: 250px;
+      padding: 15px;
+      margin: 15px auto;
       border: 1px solid #ccc;
-      border-radius: 4px;
+      border-radius: 8px;
       resize: vertical;
       font-size: 16px;
+      font-family: 'Roboto', sans-serif;
+      display: block;
     }
     .btn-group {
       text-align: center;
+      margin: 20px 0;
     }
     button {
-      margin: 5px;
-      padding: 10px 20px;
+      margin: 10px;
+      padding: 12px 24px;
       font-size: 16px;
+      font-weight: 500;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
-      background-color: #007BFF;
+      background-color: var(--button-bg);
       color: #fff;
+      transition: background-color 0.3s, transform 0.2s;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: var(--button-hover);
+      transform: scale(1.05);
+    }
+    button:active {
+      transform: scale(1);
     }
   </style>
 </head>
 <body>
+  <!-- 背景用キャンバス -->
+  <canvas id="bgCanvas"></canvas>
   <div class="container">
     <h1>URL エンコード・デコードツール</h1>
     <textarea id="inputText" placeholder="テキストを入力してください"></textarea>
@@ -70,7 +106,7 @@
   </div>
   
   <script>
-    // エンコード関数
+    // URL エンコード・デコード関数
     function encodeText() {
       const input = document.getElementById("inputText").value;
       try {
@@ -80,8 +116,6 @@
         document.getElementById("outputText").value = "エンコードに失敗しました: " + e.message;
       }
     }
-    
-    // デコード関数
     function decodeText() {
       const input = document.getElementById("inputText").value;
       try {
@@ -91,12 +125,74 @@
         document.getElementById("outputText").value = "デコードに失敗しました: " + e.message;
       }
     }
-    
-    // テキストエリアのクリア
     function clearText() {
       document.getElementById("inputText").value = "";
       document.getElementById("outputText").value = "";
     }
+
+    // 背景キャンバスのアニメーション設定
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // パーティクルの設定
+    const particleCount = 80;
+    const particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5),
+        vy: (Math.random() - 0.5),
+        radius: 2 + Math.random() * 2
+      });
+    }
+    
+    // アニメーションループ
+    function animate() {
+      // 背景を暗い色で塗りつぶし（パーティクルが見やすくなります）
+      ctx.fillStyle = '#2C3E50';
+      ctx.fillRect(0, 0, width, height);
+      
+      // パーティクルの更新と描画
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fill();
+      });
+      
+      // 近接するパーティクル間に線を描画
+      for (let i = 0; i < particleCount; i++) {
+        for (let j = i + 1; j < particleCount; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = 'rgba(255, 255, 255,' + (1 - distance / 100) + ')';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    animate();
   </script>
 </body>
 </html>
